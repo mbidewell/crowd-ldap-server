@@ -7,6 +7,7 @@ import com.atlassian.crowd.exception.OperationFailedException;
 import com.atlassian.crowd.exception.UserNotFoundException;
 import com.atlassian.crowd.model.group.Group;
 import com.atlassian.crowd.model.user.User;
+import com.atlassian.crowd.model.user.UserWithAttributes;
 import com.atlassian.crowd.search.query.entity.restriction.MatchMode;
 import com.atlassian.crowd.search.query.entity.restriction.NullRestrictionImpl;
 import com.atlassian.crowd.search.query.entity.restriction.TermRestriction;
@@ -47,7 +48,15 @@ import java.util.regex.Pattern;
  * @author Dieter Wimberger
  */
 public class CrowdPartition implements Partition {
-
+  private static final String[] poxixAccount= {
+          "uid",
+          "uidNumber",
+          "gidNumber",
+          "homeDirectory",
+          "loginShell",
+          "gecos",
+          "description"
+  };
   private static final Logger log = LoggerFactory.getLogger(CrowdPartition.class);
 
   private String m_ID;
@@ -310,6 +319,7 @@ public class CrowdPartition implements Partition {
         String user = rdn.getNormValue();
 
         User u = m_CrowdClient.getUser(user);
+        UserWithAttributes ua = m_CrowdClient.getUserWithAttributes(user);
         if (u == null) {
           return null;
         }
@@ -327,6 +337,16 @@ public class CrowdPartition implements Partition {
         userEntry.put("givenname", u.getFirstName());
         userEntry.put(SchemaConstants.SN_AT, u.getLastName());
         userEntry.put(SchemaConstants.OU_AT, "users");
+
+        //Note Add posixAccount Attributes
+        for( String ps : poxixAccount) {
+          log.trace("Looking for POSIX Attribute: " + ps);
+          String val = ua.getValue(ps);
+          if(val != null) {
+            log.debug(String.format("Adding POSIX Attribute %s with value %s ", ps, val ));
+            userEntry.put(ps, val);
+          }
+        }
 
 		//Note: Emulate AD memberof attribute 
         if(m_emulateADmemberOf) {
