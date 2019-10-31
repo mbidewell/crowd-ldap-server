@@ -321,6 +321,7 @@ public class CrowdPartition implements Partition {
         User u = m_CrowdClient.getUser(user);
         UserWithAttributes ua = m_CrowdClient.getUserWithAttributes(user);
         if (u == null) {
+          log.info("Cannot find User = " + user);
           return null;
         }
         
@@ -337,7 +338,7 @@ public class CrowdPartition implements Partition {
         userEntry.put("givenname", u.getFirstName());
         userEntry.put(SchemaConstants.SN_AT, u.getLastName());
         userEntry.put(SchemaConstants.OU_AT, "users");
-
+        
         //Note Add posixAccount Attributes
         for( String ps : poxixAccount) {
           log.trace("Looking for POSIX Attribute: " + ps);
